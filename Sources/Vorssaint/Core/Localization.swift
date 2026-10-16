@@ -396,6 +396,9 @@ struct Strings {
     let switcherTakeOverSystemShortcutsCaption: String
     let switcherAppearanceDelay: String
     let switcherAppearanceDelayCaption: String
+    let switcherMaxColumns: String
+    let switcherMaxColumnsCaption: String
+    let switcherMaxColumnsAuto: String
     let switcherInstantSelection: String
     let switcherInstantSelectionCaption: String
     let switcherMergeTabs: String
@@ -405,6 +408,7 @@ struct Strings {
     let switcherWindowlessAppsOff: String
     let switcherWindowlessAppsFinder: String
     let switcherWindowlessAppsAll: String
+    let switcherWindowlessAppsLockedFormat: String
     let switcherNoOpenWindow: String
     let switcherOtherDesktop: String
     let dockPreviewName: String
@@ -530,7 +534,6 @@ struct Strings {
     let urlCleanerManualTitle: String
     let urlCleanerInputPlaceholder: String
     let urlCleanerOutputPlaceholder: String
-    let urlCleanerCleanButton: String
     let urlCleanerPasteButton: String
     let urlCleanerCopyButton: String
     let urlCleanerClearButton: String
@@ -570,6 +573,7 @@ struct Strings {
     let homebrewGroupDependencies: String
     let homebrewOrphans: String
     let homebrewOrphansNote: String
+    let homebrewDependencyUpdatesFormat: String
     let homebrewNoSelection: String
     let homebrewDetailsTitle: String
     let homebrewInstall: String
@@ -1093,6 +1097,8 @@ struct Strings {
     let supportIntroMessage: String
     let supportIntroStarButton: String
     let supportIntroStarMessage: String
+    /// A quiet line under the donation button inviting a GitHub star instead.
+    let supportIntroStarHint: String
     let supportIntroCoffeeButton: String
     let supportIntroLaterButton: String
     let supportIntroDoneButton: String
@@ -1250,6 +1256,7 @@ struct Strings {
     let urlCleanerRulesAddButton: String
     let urlCleanerRulesRemoveButton: String
     let urlCleanerRulesRemoveSiteButton: String
+    let urlCleanerRulesRestoreSiteButton: String
     let urlCleanerRemovedFormat: String            // + comma separated names
     let switcherSearchPin: String
     let switcherSearchPinCaption: String
@@ -1413,7 +1420,7 @@ extension Strings {
         tabAdvanced: "Avançado",
         tabAbout: "Sobre",
         tabReleaseNotes: "Novidades",
-        releaseNotesOnUpdateToggle: "Mostrar novidades ao atualizar",
+        releaseNotesOnUpdateToggle: "Mostrar novidades depois de atualizar",
         minimalWindowPreviews: "Prévias minimalistas",
         minimalWindowPreviewsCaption: "Oculta títulos, botões e detalhes decorativos nas prévias do Dock e do alternador. A seleção continua visível.",
         previewSizeLabel: "Tamanho dos previews",
@@ -1511,7 +1518,7 @@ extension Strings {
         launcherAddSection: "Adicionar de volta",
         launcherKeysHint: "Setas navegam, Enter abre, 1 a 9 abrem direto",
 
-        switcherSection: "Alternador de apps",
+        switcherSection: "Alternador de janelas",
         switcherEnable: "Usar o alternador do Vorssaint",
         switcherEnableCaption: "Troque de app ou janela, inclusive janelas minimizadas e várias janelas do mesmo app.",
         switcherUsageHint: "Segure o atalho para navegar; solte para ativar a janela. Shift ou ← volta; W fecha a janela; Q encerra o app; Esc cancela.",
@@ -1521,11 +1528,14 @@ extension Strings {
         switcherSimpleModeCaption: "Mostra ícones de apps e títulos das janelas, sem previews nem captura da tela pelo alternador.",
         switcherShortcutHintApps: "Apps",
         switcherShortcutHintWindows: "Janelas",
-        switcherWindowShortcutCaption: "Abre um seletor das janelas do app em primeiro plano. Com o seletor de apps aberto, pula entre as janelas do app selecionado.",
+        switcherWindowShortcutCaption: "Abre um seletor das janelas do app em primeiro plano. Com o seletor aberto, pula entre as janelas do app selecionado.",
         switcherTakeOverSystemShortcuts: "Substituir ⌘Tab e ⌘` do macOS",
         switcherTakeOverSystemShortcutsCaption: "Desativa os atalhos correspondentes de apps e janelas do macOS somente enquanto o alternador do Vorssaint estiver ativo. Todos os apps abertos continuam acessíveis.",
         switcherAppearanceDelay: "Atraso de exibição",
         switcherAppearanceDelayCaption: "Quanto tempo o atalho precisa ficar pressionado antes de o alternador aparecer.",
+        switcherMaxColumns: "Máximo de colunas",
+        switcherMaxColumnsCaption: "Quebra para mais linhas depois desse número de itens. Útil em monitores ultrawide.",
+        switcherMaxColumnsAuto: "Automático",
         switcherInstantSelection: "Seleção instantânea",
         switcherInstantSelectionCaption: "Move o destaque e a rolagem imediatamente ao navegar por apps e janelas.",
         switcherMergeTabs: "Mostrar uma entrada por app",
@@ -1535,6 +1545,7 @@ extension Strings {
         switcherWindowlessAppsOff: "Não mostrar",
         switcherWindowlessAppsFinder: "Só o Finder",
         switcherWindowlessAppsAll: "Todos os apps",
+        switcherWindowlessAppsLockedFormat: "Todos os apps abertos continuam acessíveis enquanto “%@” estiver ativado. Desative para escolher.",
         switcherNoOpenWindow: "Sem janela aberta",
         switcherOtherDesktop: "Outra Mesa",
         dockPreviewName: "Dock Preview",
@@ -1656,7 +1667,6 @@ extension Strings {
         urlCleanerManualTitle: "Limpar agora",
         urlCleanerInputPlaceholder: "Cole uma URL",
         urlCleanerOutputPlaceholder: "A URL limpa aparece aqui",
-        urlCleanerCleanButton: "Limpar",
         urlCleanerPasteButton: "Colar",
         urlCleanerCopyButton: "Copiar",
         urlCleanerClearButton: "Limpar campo",
@@ -1695,6 +1705,7 @@ extension Strings {
         homebrewGroupDependencies: "Agrupar dependências",
         homebrewOrphans: "Não são mais necessárias",
         homebrewOrphansNote: "Instaladas como dependências, mas nenhum pacote instalado precisa mais delas.",
+        homebrewDependencyUpdatesFormat: "Atualizações de dependências: %d",
         homebrewNoSelection: "Selecione um pacote instalado ou pesquise um novo.",
         homebrewDetailsTitle: "Detalhes do pacote",
         homebrewInstall: "Instalar",
@@ -2106,7 +2117,7 @@ extension Strings {
         menuBarSpacingStandard: "Padrão",
         menuBarSpacingCompact: "Compacto",
         menuBarHideIconToggle: "Ocultar o ícone do app enquanto houver métricas",
-        menuBarHideIconCaption: "O ícone volta sozinho quando as métricas saem da barra e quando há algo a avisar (atualização pronta ou microfone silenciado).",
+        menuBarHideIconCaption: "O ícone volta sozinho quando as métricas saem da barra e quando há algo a avisar (atualização pronta, “Manter acordado” ativo ou microfone silenciado).",
         monitorLabelStyleLabel: "Rótulos",
         menuBarLabelStyleCompact: "Compactos",
         menuBarLabelStyleClassic: "Clássicos",
@@ -2192,6 +2203,7 @@ extension Strings {
         supportIntroMessage: "Se você quiser apoiar financeiramente o desenvolvimento, o Buy Me a Coffee é o único lugar para fazer isso.",
         supportIntroStarButton: "Dar uma estrela no GitHub",
         supportIntroStarMessage: "Apoio financeiro nunca é esperado. Dar uma estrela no GitHub ajuda mais pessoas a encontrar o Vorssaint e faz uma diferença enorme no desenvolvimento.",
+        supportIntroStarHint: "Uma estrela no GitHub também ajuda mais pessoas a conhecer o Vorssaint e significa muito.",
         supportIntroCoffeeButton: "Apoiar no Buy Me a Coffee",
         supportIntroLaterButton: "Agora não",
         supportIntroDoneButton: "Concluir",
@@ -2292,7 +2304,7 @@ extension Strings {
         cleanerNotifDenied: "As notificações do Vorssaint estão desativadas no sistema.",
         cleanerNotifOpenSettings: "Abrir Ajustes de Notificações…",
         launchAtLoginNeedsApplications: "O app está rodando de um lugar que não permite abrir no login. Arraste o Vorssaint para a pasta Aplicativos, abra de lá e ligue de novo.",
-        launchAtLoginNeedsApproval: "O item de login está registrado, mas continua desligado nos Ajustes do Sistema. Abra Ajustes do Sistema › Geral › Itens de Início e Extensões e ligue o Vorssaint em “Abrir ao iniciar sessão”.",
+        launchAtLoginNeedsApproval: "O item de login está registrado, mas o macOS ainda precisa da sua aprovação. Nos Ajustes do Sistema, permita que o Vorssaint abra no login e funcione em segundo plano.",
         ocrRemoveLineBreaksToggle: "Remover quebras de linha",
         ocrRemoveLineBreaksCaption: "Remove as quebras de linha para que o texto copiado seja colado como um único parágrafo.",
         ocrQRToggle: "Ler QR codes",
@@ -2318,7 +2330,7 @@ extension Strings {
         highlightsTry: "Experimentar",
         highlightsSeeAll: "Ver todas as mudanças",
         switcherCurrentSpaceOnly: "Mostrar só a Mesa atual",
-        switcherCurrentSpaceOnlyCaption: "Mostra no alternador apenas as janelas da Mesa em que você está. Escolher uma janela nunca leva você para outra Mesa.",
+        switcherCurrentSpaceOnlyCaption: "Mostra as janelas da Mesa atual. Janelas em tela cheia de outras Mesas também aparecem enquanto “Mostrar janelas em tela cheia” estiver ativo.",
         shelfFileMissing: "O arquivo não existe mais",
         previewSizeSmall: "Pequeno",
         mixerSoundEffectsOutputTitle: "Sons do sistema",
@@ -2343,6 +2355,7 @@ extension Strings {
         urlCleanerRulesAddButton: "Adicionar",
         urlCleanerRulesRemoveButton: "Excluir nome",
         urlCleanerRulesRemoveSiteButton: "Desativar todas as regras deste site",
+        urlCleanerRulesRestoreSiteButton: "Ativar todas as regras deste site",
         urlCleanerRemovedFormat: "Removidos %@",
         switcherSearchPin: "Fixar busca com S",
         switcherSearchPinCaption: "S inicia uma busca e fixa o alternador aberto, assim digitar não produz mais caracteres especiais quando o atalho usa ⌥, e uma busca que comece com Q ou W não fecha a janela nem encerra o app por engano.",
@@ -2550,8 +2563,8 @@ extension Strings {
         configuring: "Configuring…",
         sudoersFailed: "Couldn’t turn on closed-lid mode. Try again.",
         clamshellExplanation: "“Keep going with the lid closed” fully disables sleep while “Keep awake” is active and is reverted automatically when the session ends or the app quits. Prefer using it plugged in.",
-        dimScreenOnLidCloseTitle: "Dim the screen to zero",
-        dimScreenOnLidCloseCaption: "Dims the screen when the lid closes and brings the brightness back when it opens.",
+        dimScreenOnLidCloseTitle: "Dim the display to zero",
+        dimScreenOnLidCloseCaption: "Dims the display when the lid closes and brings the brightness back when it opens.",
 
         scrollSection: "Scrolling",
         invertMouseScroll: "Invert mouse scrolling",
@@ -2605,7 +2618,7 @@ extension Strings {
         launcherAddSection: "Add back",
         launcherKeysHint: "Arrows navigate, Enter opens, 1 to 9 open directly",
 
-        switcherSection: "App switcher",
+        switcherSection: "Window switcher",
         switcherEnable: "Use the Vorssaint switcher",
         switcherEnableCaption: "Switch between apps and windows, including minimized windows and multiple windows from the same app.",
         switcherUsageHint: "Hold the shortcut to navigate; release to activate the window. Shift or ← goes back; W closes the window; Q quits the app; Esc cancels.",
@@ -2615,11 +2628,14 @@ extension Strings {
         switcherSimpleModeCaption: "Shows app icons and window titles, without previews or screen capture by the switcher.",
         switcherShortcutHintApps: "Apps",
         switcherShortcutHintWindows: "Windows",
-        switcherWindowShortcutCaption: "Opens a switcher for the frontmost app’s windows. While the Apps switcher is open, jumps between the selected app’s windows.",
+        switcherWindowShortcutCaption: "Opens a switcher for the frontmost app’s windows. While the switcher is open, jumps between the selected app’s windows.",
         switcherTakeOverSystemShortcuts: "Replace macOS ⌘Tab and ⌘`",
         switcherTakeOverSystemShortcutsCaption: "Disables the matching macOS app and window shortcuts only while Vorssaint’s switcher is active. All running apps stay reachable.",
         switcherAppearanceDelay: "Appearance delay",
         switcherAppearanceDelayCaption: "How long the shortcut must be held before the switcher appears.",
+        switcherMaxColumns: "Maximum columns",
+        switcherMaxColumnsCaption: "Wraps onto more rows after this many items. Useful on ultrawide displays.",
+        switcherMaxColumnsAuto: "Auto",
         switcherInstantSelection: "Instant selection",
         switcherInstantSelectionCaption: "Moves the highlight and scroll position immediately as you browse apps and windows.",
         switcherMergeTabs: "Show one entry per app",
@@ -2629,6 +2645,7 @@ extension Strings {
         switcherWindowlessAppsOff: "Do not show",
         switcherWindowlessAppsFinder: "Finder only",
         switcherWindowlessAppsAll: "All apps",
+        switcherWindowlessAppsLockedFormat: "All running apps stay reachable while “%@” is on. Turn it off to choose.",
         switcherNoOpenWindow: "No open window",
         switcherOtherDesktop: "Other desktop",
         dockPreviewName: "Dock Preview",
@@ -2750,7 +2767,6 @@ extension Strings {
         urlCleanerManualTitle: "Clean now",
         urlCleanerInputPlaceholder: "Paste a URL",
         urlCleanerOutputPlaceholder: "The clean URL appears here",
-        urlCleanerCleanButton: "Clean",
         urlCleanerPasteButton: "Paste",
         urlCleanerCopyButton: "Copy",
         urlCleanerClearButton: "Clear field",
@@ -2789,6 +2805,7 @@ extension Strings {
         homebrewGroupDependencies: "Group dependencies",
         homebrewOrphans: "No longer needed",
         homebrewOrphansNote: "Installed as dependencies, but no installed package needs them any more.",
+        homebrewDependencyUpdatesFormat: "Dependency updates: %d",
         homebrewNoSelection: "Select an installed package or search for a new one.",
         homebrewDetailsTitle: "Package details",
         homebrewInstall: "Install",
@@ -3200,7 +3217,7 @@ extension Strings {
         menuBarSpacingStandard: "Standard",
         menuBarSpacingCompact: "Compact",
         menuBarHideIconToggle: "Hide the app icon while metrics are shown",
-        menuBarHideIconCaption: "The icon returns by itself when metrics leave the bar and when there is something to signal (an update ready or the microphone muted).",
+        menuBarHideIconCaption: "The icon returns by itself when metrics leave the bar and when there is something to signal (an update ready, “Keep awake” running or the microphone muted).",
         monitorLabelStyleLabel: "Labels",
         menuBarLabelStyleCompact: "Compact",
         menuBarLabelStyleClassic: "Classic",
@@ -3286,6 +3303,7 @@ extension Strings {
         supportIntroMessage: "If you would like to support development financially, Buy Me a Coffee is the one place to do it.",
         supportIntroStarButton: "Star Vorssaint on GitHub",
         supportIntroStarMessage: "Financial support is never expected. A star on GitHub helps more people discover Vorssaint and makes a real difference to its development.",
+        supportIntroStarHint: "A star on GitHub also helps more people find Vorssaint, and it means a lot.",
         supportIntroCoffeeButton: "Support on Buy Me a Coffee",
         supportIntroLaterButton: "Not now",
         supportIntroDoneButton: "Done",
@@ -3386,7 +3404,7 @@ extension Strings {
         cleanerNotifDenied: "Vorssaint notifications are turned off in the system.",
         cleanerNotifOpenSettings: "Open Notification Settings…",
         launchAtLoginNeedsApplications: "The app is running from a place that cannot open at login. Drag Vorssaint to the Applications folder, open it from there and turn this on again.",
-        launchAtLoginNeedsApproval: "The login item is registered but still switched off in System Settings. Open System Settings › General › Login Items & Extensions and turn Vorssaint on under Open at Login.",
+        launchAtLoginNeedsApproval: "The login item is registered, but macOS still needs your approval. In System Settings, allow Vorssaint to open at login and to run in the background.",
         ocrRemoveLineBreaksToggle: "Remove line breaks",
         ocrRemoveLineBreaksCaption: "Removes line breaks so copied text pastes as one paragraph.",
         ocrQRToggle: "Read QR codes",
@@ -3412,7 +3430,7 @@ extension Strings {
         highlightsTry: "Try it",
         highlightsSeeAll: "See all changes",
         switcherCurrentSpaceOnly: "Show only the current desktop",
-        switcherCurrentSpaceOnlyCaption: "Lists only windows from the desktop you are on. Picking a window never moves you to another desktop.",
+        switcherCurrentSpaceOnlyCaption: "Lists windows from the current desktop. Fullscreen windows from other desktops also appear while “Show fullscreen windows” is on.",
         shelfFileMissing: "The file no longer exists",
         previewSizeSmall: "Small",
         mixerSoundEffectsOutputTitle: "System sounds",
@@ -3437,6 +3455,7 @@ extension Strings {
         urlCleanerRulesAddButton: "Add",
         urlCleanerRulesRemoveButton: "Delete name",
         urlCleanerRulesRemoveSiteButton: "Turn off every rule for this site",
+        urlCleanerRulesRestoreSiteButton: "Turn on every rule for this site",
         urlCleanerRemovedFormat: "Removed %@",
         switcherSearchPin: "Pin search with S",
         switcherSearchPinCaption: "S starts a search and pins the switcher open, so typing no longer produces special characters when your shortcut uses ⌥, and a search starting with Q or W no longer closes the window or quits the app by mistake.",
@@ -3463,9 +3482,9 @@ extension Strings {
         switcherMinimizedPlacementHidden: "Hide",
         switcherShowFullscreenWindows: "Show fullscreen windows",
         switcherScreenPlacementLabel: "Show on",
-        switcherScreenPlacementPointer: "Screen with the pointer",
-        switcherScreenPlacementMenuBar: "Screen with the menu bar",
-        switcherScreenPlacementActiveWindow: "Screen with the active window",
+        switcherScreenPlacementPointer: "Display with the pointer",
+        switcherScreenPlacementMenuBar: "Display with the menu bar",
+        switcherScreenPlacementActiveWindow: "Display with the active window",
         switcherScreenPlacementCaption: "Which display the switcher opens on when more than one is connected.",
         switcherCurrentDisplayOnly: "Show only the current display",
         switcherCurrentDisplayOnlyCaption: "Lists only windows on the display under the pointer. If that display has no windows, the switcher does not open.",

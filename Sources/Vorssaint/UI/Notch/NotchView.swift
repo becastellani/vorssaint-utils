@@ -206,7 +206,8 @@ struct NotchView: View {
                 let strip = service.compactStripSize(for: activity, companion: service.compactCompanion)
                 activityStrip(activity, size: strip)
                     .modifier(NotchMascotActivityVisit(service: service,
-                                                       track: service.mascotTrack(overActivityStrip: strip)))
+                                                       track: service.mascotTrack(overActivityStrip: strip),
+                                                       ownStrip: true))
                     .transition(companionSwap)
             }
         } else if let departingMusic = service.departingMusic ?? service.lingeringMusic {
@@ -241,7 +242,7 @@ struct NotchView: View {
             case .downloads: NotchCapsuleDownloadStrip(service: service, size: size)
             case .agents: NotchCapsuleAgentStrip(service: service, size: size)
             case .calendar: NotchCapsuleCalendarStrip(service: service, size: size)
-            case .music: NotchCapsuleMusicStrip(service: service, size: size)
+            case .music: NotchCapsuleMusicStrip(service: service, size: size, interactive: true)
             case .keepAwake: NotchCapsuleKeepAwakeStrip(service: service, size: size)
             }
         } else {
@@ -255,7 +256,7 @@ struct NotchView: View {
             case .downloads: NotchDownloadStrip(service: service, displayGeometry: geometry)
             case .agents: NotchAgentStrip(service: service, displayGeometry: geometry)
             case .calendar: NotchCalendarStrip(service: service, displayGeometry: geometry)
-            case .music: NotchMusicStrip(service: service, displayGeometry: geometry)
+            case .music: NotchMusicStrip(service: service, displayGeometry: geometry, interactive: true)
             case .keepAwake: NotchKeepAwakeStrip(service: service, displayGeometry: geometry)
             }
         }
@@ -321,6 +322,9 @@ struct NotchView: View {
         .padding(.top, service.expandedGeometry.headerTopInset)
         .padding(.bottom, NotchLayout.bottomInset)
         .frame(width: service.expandedSize.width, height: service.expandedSize.height, alignment: .top)
+        // Opening the island makes its panel key, so Keyboard navigation would ring
+        // the first header button. Show the ring once keyboard input begins.
+        .focusEffectDisabled(!service.showsKeyboardFocus)
     }
 
     /// Keep each page's minimum usable layout reachable when a custom height
@@ -331,9 +335,9 @@ struct NotchView: View {
         switch service.selected {
         case .controls:
             let items = NotchSupport.controls()
-            let shortcuts = items.filter { $0 != .music && $0 != .volume && $0 != .brightness }
+            let shortcuts = items.filter { $0 != .music && !$0.isLevel }
             size.height = max(size.height, NotchLayout.controls(
-                hasCards: items.contains(.music) || items.contains(.volume) || items.contains(.brightness),
+                hasCards: items.contains(.music) || items.contains(where: \.isLevel),
                 shortcutCount: shortcuts.count, width: size.width, height: size.height).height)
         case .timer:
             let session = NotchTimerService.shared.session
@@ -408,16 +412,11 @@ struct NotchView: View {
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    if !quickActions.contains(.explore) {
-                        NotchIconButton(symbol: "square.grid.2x2", title: text.sectionsTitle, action: service.toggleSections)
-                    }
-                    Text(service.selected.title(l10n.language))
-                        .font(Font(NotchLayout.headerTitleFont as CTFont))
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    pageTitle(quickActions: quickActions)
                 }
             }
-            .frame(width: service.expandedGeometry.headerCameraGap > 0 ? (service.contentSize.width - service.expandedGeometry.headerCameraGap) / 2 : nil)
+            .frame(width: service.expandedGeometry.headerCameraGap > 0 ? (service.contentSize.width - service.expandedGeometry.headerCameraGap) / 2 : nil,
+                   alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             // Keep search mounted so a media key never discards its focus.
             .opacity(headerFeedback == nil ? 1 : 0)
@@ -446,17 +445,76 @@ struct NotchView: View {
         }
         .frame(height: service.expandedGeometry.headerRowHeight)
         .contentShape(Rectangle())
-        .onHover { headerHovered = $0 }
+        // Each move reports, not only a crossing. After the watch below hides
+        // the actions, SwiftUI may still count the pointer as inside and would
+        // never report it entering again.
+        .onContinuousHover { phase in
+            switch phase {
+            case .active: if !headerHovered { headerHovered = true }
+            case .ended: headerHovered = false
+            }
+        }
+        .background { NotchHoverExitWatch(active: headerHovered) { headerHovered = false } }
         .onAppear { UpdateService.shared.checkIfStale() }
         // Collapsing under the pointer takes the row away without a final
         // hover(false); the next opening starts with the actions out of sight.
         .onDisappear { headerHovered = false }
     }
 
+    /// A page's title with the sections button before it and, on the clipboard
+    /// page, the magnifier after it where the island has room for it: exactly
+    /// what `NotchLayout.pageTitleWidth` counts, since a title the island places
+    /// beside the camera gets only that much room. Anything more, a spacer's
+    /// spacing included, would cut it.
+    private func pageTitle(quickActions: [NotchQuickAction]) -> some View {
+        HStack(spacing: 6) {
+            if !quickActions.contains(.explore) {
+                NotchIconButton(symbol: "square.grid.2x2", title: text.sectionsTitle, action: service.toggleSections)
+            }
+            Text(service.selected.title(l10n.language))
+                .font(Font(NotchLayout.headerTitleFont as CTFont))
+                .lineLimit(1)
+            if showsClipboardActions, service.clipboardHeaderShowsSearch {
+                NotchIconButton(symbol: "magnifyingglass", title: FeatureStrings.clipboard(l10n.language).search,
+                                action: service.requestClipboardSearch)
+            }
+        }
+    }
+
     /// The island's history page shows only the cards, so its clear action
     /// sits in the header, where the panel's own header keeps it.
     private var showsCapturesClear: Bool {
         service.selected == .captures && service.captureContent == nil && !showsDetail
+            && !service.showingSections && !service.modules.isEmpty
+    }
+
+    /// The clipboard page keeps its search and filter in the header, so the
+    /// entries have the rows they would take.
+    private var showsClipboardActions: Bool {
+        service.selected == .clipboard && !showsDetail && !service.showingSections && !service.modules.isEmpty
+    }
+
+    /// The clipboard's filter, clearing and history window join the header's
+    /// own buttons. Where all of them would cut the title, as in a narrow
+    /// island, the header gathers them in the menu it shows beside the camera.
+    private func clipboardActionsInMenu(quickActions: [NotchQuickAction]) -> Bool {
+        guard showsClipboardActions else { return false }
+        // An offered or running update draws its label in this row too, as wide
+        // as its language makes it, so the clipboard's three wait in the menu
+        // while it shows rather than cut the title.
+        if case .available = updates.state { return true }
+        if updates.state.isInProgress { return true }
+        // The clipboard's three and Collapse, and Keep open and Settings unless they float.
+        let buttons = 4 + [NotchQuickAction.pin, .settings].filter { !quickActions.contains($0) }.count
+        let title = NotchLayout.headerTitleWidth(service.selected.title(l10n.language),
+                                                 button: !quickActions.contains(.explore))
+            + (service.clipboardHeaderShowsSearch ? NotchLayout.headerSearchWidth : 0)
+        return title + 6 + CGFloat(buttons) * 28 + CGFloat(buttons - 1) * 6 > service.contentSize.width
+    }
+
+    /// Notifications show only cards too; every row of height is theirs.
+    private var showsNotificationsClear: Bool {
+        service.selected == .notifications && !showsDetail
             && !service.showingSections && !service.modules.isEmpty
     }
 
@@ -472,13 +530,14 @@ struct NotchView: View {
             NotchUpdateControl(action: service.showUpdate, compact: compactUpdate)
             overflowMenu(items: overflowItems(
                 tools: service.selected == .tools && !showsDetail && !service.showingSections && launcher.activeUtility == nil,
-                clear: showsCapturesClear))
+                clear: showsCapturesClear, clearNotifications: showsNotificationsClear, clipboard: showsClipboardActions))
         }
     }
 
     /// The header's overflow entries, each with the glyph its own button
     /// wears when the pointer row shows them separately.
-    private func overflowItems(tools: Bool, clear: Bool) -> [NotchMenuItem] {
+    private func overflowItems(tools: Bool, clear: Bool, clearNotifications: Bool = false,
+                               clipboard: Bool = false) -> [NotchMenuItem] {
         var items: [NotchMenuItem] = []
         if tools {
             items.append(NotchMenuItem(title: text.customizeTools, checked: launcher.isEditing,
@@ -493,6 +552,37 @@ struct NotchView: View {
                 guard !empty() else { return }
                 RecentCapturesView.confirmClearAboveIsland()
             }))
+        }
+        if clearNotifications {
+            // Checked as the header draws and again when chosen, like the
+            // captures entry: this view does not observe the notification service.
+            let notifications = NotchNotificationService.shared
+            let unavailable = { notifications.items.isEmpty || notifications.openingID != nil }
+            items.append(NotchMenuItem(title: FeatureStrings.notchNotifications(l10n.language).clearAll, symbol: "trash",
+                                       enabled: !unavailable(), action: {
+                guard !unavailable() else { return }
+                NotchClearNotificationsButton.confirmClearAboveIsland()
+            }))
+        }
+        if clipboard {
+            // The clipboard's own header buttons, which the header beside the
+            // camera, or one too narrow, has no room for. Clearing is checked
+            // as the header draws and again when chosen, like the entries above.
+            let strings = FeatureStrings.clipboard(l10n.language)
+            let history = ClipboardHistoryService.shared
+            // A title with room beside the camera for itself alone leaves the
+            // magnifier here; typing still opens the search as well.
+            if !service.clipboardHeaderShowsSearch {
+                items.append(NotchMenuItem(title: strings.search, symbol: "magnifyingglass",
+                                           action: service.requestClipboardSearch))
+            }
+            items.append(NotchMenuItem(title: strings.pinned, checked: service.clipboardPinnedOnly,
+                                       symbol: "line.3.horizontal.decrease.circle") { service.clipboardPinnedOnly.toggle() })
+            items.append(NotchMenuItem(title: strings.clearRecent, symbol: "trash", enabled: !history.recentEntries.isEmpty,
+                                       action: NotchClipboardHeaderActions.confirmClearRecent))
+            items.append(NotchMenuItem(title: strings.title, symbol: "arrow.up.forward.app") {
+                service.perform { history.showHistoryWindow(preferNotch: false) }
+            })
         }
         if !items.isEmpty { items.append(.separator) }
         items.append(NotchMenuItem(title: service.pinned ? text.unpin : text.pin,
@@ -523,26 +613,32 @@ struct NotchView: View {
         let revealed = headerHovered || updating
         return HStack(spacing: 6) {
             NotchUpdateControl(action: service.showUpdate)
-            if service.selected == .tools, !service.showingAppPanel, !service.showingSections, service.selectedMetric == nil,
-               !service.modules.isEmpty, launcher.activeUtility == nil {
-                NotchIconButton(symbol: launcher.isEditing ? "checkmark" : "slider.horizontal.3",
-                                title: text.customizeTools, selected: launcher.isEditing) {
-                    withAnimation(.easeOut(duration: 0.15)) { launcher.isEditing.toggle() }
+            if clipboardActionsInMenu(quickActions: quickActions) {
+                overflowMenu(items: overflowItems(tools: false, clear: false, clipboard: true))
+            } else {
+                if service.selected == .tools, !service.showingAppPanel, !service.showingSections, service.selectedMetric == nil,
+                   !service.modules.isEmpty, launcher.activeUtility == nil {
+                    NotchIconButton(symbol: launcher.isEditing ? "checkmark" : "slider.horizontal.3",
+                                    title: text.customizeTools, selected: launcher.isEditing) {
+                        withAnimation(.easeOut(duration: 0.15)) { launcher.isEditing.toggle() }
+                    }
                 }
-            }
-            if showsCapturesClear { NotchClearCapturesButton() }
-            // Keeping the island open is one click, like the floating buttons;
-            // a header button steps aside when the same action floats beside it.
-            if !quickActions.contains(.pin) {
-                NotchIconButton(symbol: service.pinned ? "pin.fill" : "pin",
-                                title: service.pinned ? text.unpin : text.pin, selected: service.pinned) {
-                    service.pinned.toggle()
+                if showsCapturesClear { NotchClearCapturesButton() }
+                if showsClipboardActions { NotchClipboardHeaderActions(service: service) }
+                if showsNotificationsClear { NotchClearNotificationsButton() }
+                // Keeping the island open is one click, like the floating buttons;
+                // a header button steps aside when the same action floats beside it.
+                if !quickActions.contains(.pin) {
+                    NotchIconButton(symbol: service.pinned ? "pin.fill" : "pin",
+                                    title: service.pinned ? text.unpin : text.pin, selected: service.pinned) {
+                        service.pinned.toggle()
+                    }
                 }
+                if !quickActions.contains(.settings) {
+                    NotchIconButton(symbol: "gearshape", title: l10n.s.menuSettings, action: service.openSettings)
+                }
+                NotchIconButton(symbol: "chevron.up", title: text.collapse, action: service.collapse)
             }
-            if !quickActions.contains(.settings) {
-                NotchIconButton(symbol: "gearshape", title: l10n.s.menuSettings, action: service.openSettings)
-            }
-            NotchIconButton(symbol: "chevron.up", title: text.collapse, action: service.collapse)
         }
         .opacity(revealed ? 1 : 0)
         .overlay(alignment: .trailing) {
@@ -639,6 +735,63 @@ struct NotchView: View {
     }
 }
 
+/// AppKit reports hover from the moves the island's window receives, and the
+/// window server sends it none over the window's clear pixels. A pointer that
+/// left the header across them, above a floating capsule or toward the side
+/// buttons, was never reported gone, so the row's actions stayed in view.
+/// While the row reads as hovered, every move is checked against it here.
+private struct NotchHoverExitWatch: NSViewRepresentable {
+    let active: Bool
+    let exited: () -> Void
+
+    func makeNSView(context: Context) -> NotchHoverExitView { NotchHoverExitView() }
+    func updateNSView(_ view: NotchHoverExitView, context: Context) {
+        view.exited = exited
+        view.watch(active)
+    }
+    static func dismantleNSView(_ view: NotchHoverExitView, coordinator: ()) { view.watch(false) }
+}
+
+private final class NotchHoverExitView: NSView {
+    var exited: (() -> Void)?
+    private var monitors: [Any] = []
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setAccessibilityElement(false)
+    }
+    required init?(coder: NSCoder) { nil }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    deinit { monitors.forEach(NSEvent.removeMonitor) }
+
+    /// Nothing is watched at rest.
+    func watch(_ active: Bool) {
+        guard active else {
+            monitors.forEach(NSEvent.removeMonitor)
+            monitors.removeAll()
+            return
+        }
+        guard monitors.isEmpty else { return }
+        // A drag moves the pointer without mouse-moved events.
+        let moves: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged]
+        if let token = NSEvent.addGlobalMonitorForEvents(matching: moves, handler: { [weak self] _ in self?.check() }) {
+            monitors.append(token)
+        }
+        if let token = NSEvent.addLocalMonitorForEvents(matching: moves, handler: { [weak self] event in
+            self?.check()
+            return event
+        }) { monitors.append(token) }
+    }
+
+    private func check() {
+        // The pointer on a screen's top row reports y == maxY, which
+        // `contains` excludes and NSMouseInRect keeps.
+        guard let window,
+              !NSMouseInRect(NSEvent.mouseLocation, window.convertToScreen(convert(bounds, to: nil)), false) else { return }
+        exited?()
+    }
+}
+
 /// Observes the history on its own, so a new capture does not redraw the island.
 private struct NotchClearCapturesButton: View {
     @ObservedObject private var history = RecentCaptureService.shared
@@ -670,6 +823,29 @@ private extension UpdateService.State {
     }
 }
 
+/// The charge the closed island rests with, beside a camera or in the capsule.
+enum NotchRestingBattery {
+    /// Both halves of the charge turn amber, then red, together as it runs low.
+    static func tint(for power: PowerReading, tint: Bool, threshold: Int,
+                     early: Bool, earlyThreshold: Int) -> Color {
+        switch NotchSupport.batteryWarning(percent: power.chargePercent,
+                                           externalConnected: power.externalConnected,
+                                           tint: tint, threshold: threshold,
+                                           early: early, earlyThreshold: earlyThreshold) {
+        case .low: return .red
+        case .early: return .orange
+        case .none: return .white.opacity(0.9)
+        }
+    }
+
+    /// The icon empties with the charge, as the menu bar's does.
+    static func symbol(for power: PowerReading) -> String {
+        BatteryPowerSupport.menuBarSymbol(percent: power.chargePercent ?? 100,
+                                          isCharging: power.isCharging,
+                                          externalConnected: power.externalConnected)
+    }
+}
+
 /// The closed island at rest beside a camera: the wings with the charge,
 /// the song or the AI allowance the person chose, when the menus leave room.
 /// The companion rests in a wing when nothing else is there, and walks
@@ -679,9 +855,20 @@ struct NotchRestingStrip: View {
     /// Another display's strip, when the island shows on every display.
     var displayGeometry: NotchGeometry? = nil
     @ObservedObject private var music = NotchMusicService.shared
+    @AppStorage(DefaultsKey.notchLowBatteryTint) private var lowBatteryTint = false
+    @AppStorage(DefaultsKey.notchLowBatteryThreshold) private var lowBatteryThreshold = NotchSupport.defaultLowBatteryThreshold
+    @AppStorage(DefaultsKey.notchLowBatteryEarly) private var earlyBatteryWarning = false
+    @AppStorage(DefaultsKey.notchLowBatteryEarlyThreshold) private var earlyBatteryThreshold = NotchSupport.defaultEarlyBatteryThreshold
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var geometry: NotchGeometry { displayGeometry ?? service.geometry }
+
+    private var batteryTint: Color {
+        NotchRestingBattery.tint(for: service.power, tint: lowBatteryTint, threshold: lowBatteryThreshold,
+                                 early: earlyBatteryWarning, earlyThreshold: earlyBatteryThreshold)
+    }
+
+    private var batterySymbol: String { NotchRestingBattery.symbol(for: service.power) }
 
     /// Centre battery content inside the wing's visible area, past its curved shoulder.
     private var restingBatteryInset: CGFloat {
@@ -713,7 +900,8 @@ struct NotchRestingStrip: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 5))
                             }
                         case .battery:
-                            Image(systemName: "battery.100percent").font(.system(size: 12))
+                            Image(systemName: batterySymbol).font(.system(size: 12))
+                                .foregroundStyle(batteryTint)
                                 .padding(.leading, restingBatteryInset)
                         case .agents:
                             NotchAgentRestingWing(leading: true)
@@ -736,6 +924,7 @@ struct NotchRestingStrip: View {
                         case .battery:
                             if let percent = service.power.chargePercent {
                                 Text("\(percent)%").font(.system(size: 9, weight: .medium)).monospacedDigit()
+                                    .foregroundStyle(batteryTint)
                                     .lineLimit(1)
                                     .padding(.trailing, restingBatteryInset)
                             }
