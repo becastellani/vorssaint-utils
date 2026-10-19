@@ -935,6 +935,8 @@ enum ClipboardFeatureTests {
                          "\(language.rawValue) copy-selected button format")
             expectFormat(clipboardStrings.clearRecentConfirmFormat, ["d"],
                          "\(language.rawValue) clear-unpinned confirmation format")
+            expectFormat(FeatureStrings.clipboardRetention(language).daysFormat, ["d"],
+                         "\(language.rawValue) clipboard retention day format")
             suite.expect(!clipboardStrings.autoClearEnable.isEmpty
                    && !clipboardStrings.autoClearSecondsSuffix.isEmpty
                    && !clipboardStrings.autoClearOnSleep.isEmpty

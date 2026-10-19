@@ -119,7 +119,7 @@ extension ClipboardRetentionStrings {
         forever: "無期限",
         oneDay: "1日",
         daysFormat: "%d日",
-        caption: "上限に達していなくても、古い項目は削除されます。ピン留めした項目は常に保持されます。"
+        caption: "上限に達していなくても、古い項目は削除されます。固定した項目は常に保持されます。"
     )
 
     static let ko = ClipboardRetentionStrings(
